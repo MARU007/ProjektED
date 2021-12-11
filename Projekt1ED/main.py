@@ -176,7 +176,7 @@ while flag:
     vectors["w"+str(vector_nr)] = vectors_list
     vector_nr += 1
 
-  #st.write(vectors)
+  st.write(vectors)
   listCountObj.append(countObj)
 
 
@@ -187,20 +187,25 @@ if(len(df.columns)==3):
   col_b = df.columns[1]
   plot_class =  df.columns[2]
   fig, ax = plt.subplots()
-
-   
-  df.plot(kind='scatter',x=col_a, y=col_b,ax=ax)
+  
+  #we converting it into categorical data
+  cat_col = df[plot_class].astype('category') 
+  st.write(cat_col)
+  #we are getting codes for it 
+  cat_col = cat_col.cat.codes 
+  st.write(cat_col)
+  df.plot(kind='scatter',x=col_a, y=col_b, c=cat_col, cmap="viridis", ax=ax)
 
   st.write(list_point_cut)
   for line_point in list_point_cut:
     st.write(line_point.name_class)
   
     if(col_a==line_point.name_class):
-      x1, y1 = [line_point.value, line_point.value], [df[line_point.name_class].min(), df[line_point.name_class].max()]
+      x1, y1 = [line_point.value, line_point.value], [df[col_b].min(), df[col_b].max()]
       ax.plot( x1, y1, color='red')
 
     else:
-      x1, y1 =  [df[line_point.name_class].min(), df[line_point.name_class].max()], [line_point.value, line_point.value]
+      x1, y1 =  [df[col_a].min(), df[col_a].max()], [line_point.value, line_point.value]
       ax.plot( x1, y1, color='blue')
 
     
