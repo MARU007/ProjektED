@@ -52,6 +52,7 @@ flag=True
 isXor=0
 count=0
 vector_nr = 1
+previous_record=[]
 
 while flag:
 
@@ -62,7 +63,7 @@ while flag:
     df1 = df1.sort_values(by=[one_class, class_col_name])
     st.write("df1 - class: "+str(one_class))
     st.write(df1) 
-
+    previous_record=[]
     for index, beginning_record in df1.iterrows():
 
       st.write("beginning_record[one_class]: "+str(beginning_record[one_class]))
@@ -71,26 +72,38 @@ while flag:
 
       if (df1[class_col_name].iloc[0]==beginning_record[class_col_name]):
         count=count+1 
-        previous_record = beginning_record  
+        previous_record.append(beginning_record)  
 
         st.write("Count dla beginning_record: "+str(count))
 
       else:
-        if(beginning_record[one_class]!=previous_record[one_class] or count>1):    
+        previous_record_last_element = previous_record[-1]
+        if(beginning_record[one_class]!=previous_record_last_element[one_class]):    
           if(countObj.count<count): 
-            mean_points = (beginning_record[one_class]+previous_record[one_class])/2.0
+            mean_points = (beginning_record[one_class]+previous_record_last_element[one_class])/2.0
             countObj = CountObj(count, one_class, "beginning", mean_points) 
             count=0 
             st.write("Średnia wartośc (beginning): "+str(mean_points))          
             st.write("Count (beginning): "+str(countObj.count))
             
         else:       
-          if(count==2):
+          if(count==1):
             isXor=isXor+1
+          else:
+            for previous_record_element in reversed(previous_record):
+                if(beginning_record[one_class]!=previous_record_element[one_class]):    
+                  if(countObj.count<count): 
+                    mean_points = (beginning_record[one_class]+previous_record_element[one_class])/2.0
+                    countObj = CountObj(count, one_class, "beginning", mean_points) 
+                    count=0 
+                    st.write("Średnia wartośc (beginning): "+str(mean_points))          
+                    st.write("Count (beginning): "+str(countObj.count))
+                  break
+                count=count-1
         break
 
     count=0
-
+    previous_record=[]
     for index,end_record in df1.iloc[::-1].iterrows():
 
       st.write("end_record[one_class]: "+str(beginning_record[one_class]))
@@ -98,14 +111,15 @@ while flag:
 
       if (df1[class_col_name].iloc[-1]==end_record[class_col_name]):       
         count=count+1
-        previous_record = end_record
+        previous_record.append(end_record)
 
         st.write("Count dla end_record: "+str(count))
 
       else:
-        if(end_record[one_class]!=previous_record[one_class] or count>1):
+        previous_record_last_element = previous_record[-1]
+        if(end_record[one_class]!=previous_record_last_element[one_class]):
           if(countObj.count<count):
-            mean_points = (end_record[one_class]+previous_record[one_class])/2.0
+            mean_points = (end_record[one_class]+previous_record_last_element[one_class])/2.0
             countObj = CountObj(count, one_class, "end", mean_points) 
             count=0
 
@@ -113,10 +127,21 @@ while flag:
             st.write("Count (end_record): "+str(countObj.count))
 
         else:          
-          if(count==2):
+          if(count==1):
             isXor=isXor+1
             toDelete=index
-  
+          else:
+            for previous_record_element in reversed(previous_record):
+              if(end_record[one_class]!=previous_record_element[one_class]):
+                if(countObj.count<count):
+                  mean_points = (end_record[one_class]+previous_record_element[one_class])/2.0
+                  countObj = CountObj(count, one_class, "end", mean_points) 
+                  count=0
+
+                  st.write("Średnia wartośc (end_record): "+str(mean_points))
+                  st.write("Count (end_record): "+str(countObj.count))
+                break
+              count=count-1
         break
 
   
@@ -125,6 +150,7 @@ while flag:
   st.write((len(df.columns)-1)*2)
   if(isXor==(len(df.columns)-1)*2):
     df1.drop(index=toDelete,inplace=True)
+    df.drop(index=toDelete,inplace=True)
     isXor=0
     st.write("!!!!!!!!XOR!!!!!!!!")
     continue
@@ -137,7 +163,8 @@ while flag:
   st.write("Punkt przez ktory tniemy:")
   st.write(countObj.mean_points)
 
-  if(countObj.count<=0): break
+  if(countObj.count<=0 and isXor==0): break #wychodzi z gownego whila 
+
   if(countObj.side=="beginning"):
     df1=df1.sort_values(by=[countObj.name_class, class_col_name])
     st.write("Usuwam to: ")
@@ -161,10 +188,10 @@ while flag:
     st.write("Usuwam to: ")
     st.write(countObj.name_class)
     st.write(df1)
-    st.write(df1.head(countObj.count))
+    st.write(df1.tail(countObj.count))
     df1 = df1[:-countObj.count]
     #df1.drop(df1.index[range(countObj.count)],inplace=True)
-
+    st.write(df1)
     list_point_cut.append(CutOffPointObj(countObj.mean_points, countObj.name_class))
 
     vectors_list = []
@@ -201,11 +228,11 @@ if(len(df.columns)==3):
     st.write(line_point.name_class)
   
     if(col_a==line_point.name_class):
-      x1, y1 = [line_point.value, line_point.value], [df[col_b].min(), df[col_b].max()]
+      x1, y1 = [line_point.value, line_point.value], [df[col_b].min()-1, df[col_b].max()+1]
       ax.plot( x1, y1, color='red')
 
     else:
-      x1, y1 =  [df[col_a].min(), df[col_a].max()], [line_point.value, line_point.value]
+      x1, y1 =  [df[col_a].min()-1, df[col_a].max()+1], [line_point.value, line_point.value]
       ax.plot( x1, y1, color='blue')
 
     
