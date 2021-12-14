@@ -239,6 +239,15 @@ if(len(df.columns)==3):
 st.pyplot(fig)
 
 
+@st.cache
+def convert_df(df):
+  # IMPORTANT: Cache the conversion to prevent computation on every rerun
+  return df.to_csv(index=False, sep='\t').encode('utf-8')
+
+csv = convert_df(vectors.drop(columns=df.columns[:-1]))
+
+download_file_name = st.text_input("nazwa pliku", 'vectors.csv')
+st.download_button(label="Download CSV",data=csv,file_name=download_file_name,mime='text/csv')
 
 
 
